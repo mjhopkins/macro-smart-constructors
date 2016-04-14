@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+ "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <meta name="author" content="Mark Hopkins" />
+  <meta name="author" content="@antiselfdual" />
+  <meta name="date" content="2016-04-13" />
+  <title>Macro-based smart constructors</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <style type="text/css">
+div.sourceCode { overflow-x: auto; }
+table.sourceCode, tr.sourceCode, td.lineNumbers, td.sourceCode {
+  margin: 0; padding: 0; vertical-align: baseline; border: none; }
+table.sourceCode { width: 100%; line-height: 100%; }
+td.lineNumbers { text-align: right; padding-right: 4px; padding-left: 4px; color: #aaaaaa; border-right: 1px solid #aaaaaa; }
+td.sourceCode { padding-left: 5px; }
+code > span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code > span.dt { color: #902000; } /* DataType */
+code > span.dv { color: #40a070; } /* DecVal */
+code > span.bn { color: #40a070; } /* BaseN */
+code > span.fl { color: #40a070; } /* Float */
+code > span.ch { color: #4070a0; } /* Char */
+code > span.st { color: #4070a0; } /* String */
+code > span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code > span.ot { color: #007020; } /* Other */
+code > span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code > span.fu { color: #06287e; } /* Function */
+code > span.er { color: #ff0000; font-weight: bold; } /* Error */
+code > span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+code > span.cn { color: #880000; } /* Constant */
+code > span.sc { color: #4070a0; } /* SpecialChar */
+code > span.vs { color: #4070a0; } /* VerbatimString */
+code > span.ss { color: #bb6688; } /* SpecialString */
+code > span.im { } /* Import */
+code > span.va { color: #19177c; } /* Variable */
+code > span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code > span.op { color: #666666; } /* Operator */
+code > span.bu { } /* BuiltIn */
+code > span.ex { } /* Extension */
+code > span.pp { color: #bc7a00; } /* Preprocessor */
+code > span.at { color: #7d9029; } /* Attribute */
+code > span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code > span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code > span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+  </style>
+  <link rel="stylesheet" type="text/css" media="screen, projection, print"
+    href="http://www.w3.org/Talks/Tools/Slidy2/styles/slidy.css" />
+  <script src="http://www.w3.org/Talks/Tools/Slidy2/scripts/slidy.js"
+    charset="utf-8" type="text/javascript"></script>
+</head>
+<body>
+
+<div class="slide titlepage">
+  <img id="cover-photo" src="construction.jpg" class="cover"
+alt="some guys constructing a geodesic dome" />
+  <h1 class="title">Macro-based smart constructors</h1>
+  <p class="author">
+Mark Hopkins<br/><span class="citation"><a href="https://twitter.com/antiselfdual">@antiselfdual</a></span>
+  </p>
+  <p class="date">April 13, 2016</p>
+</div>
+<div id="raw" class="slide section level2">
+<h1>Raw</h1>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> customerID  = 13753634L
+<span class="kw">val</span> format      = <span class="st">&quot;YYYY-MM-dd HH:mm:ss&quot;</span>  
+<span class="kw">val</span> port        = <span class="dv">8080</span>
+<span class="kw">val</span> custDetails = (<span class="st">&quot;Mary Wu&quot;</span>, 13753634L, <span class="dv">1234</span>, <span class="dv">1298</span>, <span class="dv">431</span>)
+
+<span class="kw">def</span> <span class="fu">f</span>(customer: String, format: String, port: Int) = ...</code></pre></div>
+<p>Raw values</p>
+<ul>
+<li>aren't validated at the time they're constructed</li>
+<li>can lead to errors.</li>
+</ul>
+</div>
+<div id="raw-1" class="slide section level2">
+<h1>Raw</h1>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> customerID  = 13753634L
+<span class="kw">val</span> format      = <span class="st">&quot;YYYY-MM-dd HH:mm:ss&quot;</span>  
+<span class="kw">val</span> port        = <span class="dv">8080</span>
+<span class="kw">val</span> custDetails = (<span class="st">&quot;Mary Wu&quot;</span>, 13753634L, <span class="dv">1234</span>, <span class="dv">1298</span>, <span class="dv">431</span>) 
+
+<span class="kw">def</span> <span class="fu">f</span>(customer: String, format: String, port: Int) = ...</code></pre></div>
+<p>Raw values</p>
+<ul>
+<li>aren't validated at the time they're constructed</li>
+<li><del>can</del> <strong>will</strong> lead to errors.</li>
+</ul>
+<div class="incremental">
+<p>We'll inevitably mix things up, causing bugs.</p>
+</div>
+<div class="incremental">
+<p>How can we add <strong>safety</strong>?</p>
+<p>... <em>without incurring too great a cost</em> (run time or ease-of-use)</p>
+</div>
+</div>
+<div id="better" class="slide section level2">
+<h1>Better</h1>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> customerID  = <span class="fu">CustomerID</span>(13753634L)
+<span class="kw">val</span> format      = Format(<span class="st">&quot;YYYY-MM-dd HH:mm:ss&quot;</span>)
+<span class="kw">val</span> port        = Port(<span class="dv">8080</span>)
+<span class="kw">val</span> custDetails = 
+  <span class="fu">Customer</span>(
+    name = <span class="st">&quot;Mary Wu&quot;</span>,
+    id = customerId,
+    balance = <span class="fu">Aud</span>(<span class="dv">1234</span>),
+    ...
+  ) 
+  
+<span class="kw">def</span> <span class="fu">f</span>(c: CustomerID, f: Format, p: Port) = ...</code></pre></div>
+<p>Types avoid mixups.</p>
+</div>
+<div id="cheaper" class="slide section level2">
+<h1>Cheaper</h1>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Port(value: Int)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Port(value: Int) <span class="kw">extends</span> AnyVal</code></pre></div>
+<p>Value classes remove the overhead of allocating a new object.</p>
+</div>
+<div id="safer" class="slide section level2">
+<h1>Safer</h1>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> scalaz.\/
+<span class="kw">import</span> scalaz.<span class="fu">syntax</span>.<span class="fu">either</span>.<span class="fu">_</span>
+
+<span class="kw">final</span> <span class="kw">class</span> Port <span class="kw">private</span>(value: Int)
+
+<span class="kw">object</span> Port {
+  <span class="kw">def</span> <span class="fu">apply</span>(p: Int): String \/ Port =
+    <span class="kw">if</span> (<span class="dv">1024</span> &lt;= p &amp;&amp; p &lt;= <span class="dv">65535</span>) <span class="kw">new</span> Port(p).<span class="fu">right</span>
+    <span class="kw">else</span> s<span class="st">&quot;$p is out of range&quot;</span>.<span class="fu">left</span>
+}</code></pre></div>
+<ul>
+<li><strong>private</strong> constructor</li>
+<li>smart constructor supplied instead</li>
+</ul>
+<div class="incremental">
+<pre><code>&gt; val p: Port = 
+  Port(-1) valueOr { s =&gt; throw new IllegalArgumentException(s) }
+
+java.lang.IllegalArgumentException: -1 is out of range</code></pre>
+</div>
+</div>
+<div id="variation" class="slide section level2">
+<h1>Variation</h1>
+<ul>
+<li>Use <code>parse</code> instead of <code>apply</code></li>
+<li>Catch an exception.</li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> scalaz.\/
+
+<span class="kw">final</span> <span class="kw">case</span> <span class="kw">class</span> TimeFormat <span class="kw">private</span>(pattern: String) <span class="kw">extends</span> AnyVal
+
+<span class="kw">object</span> TimeFormat {
+  <span class="kw">def</span> <span class="fu">parse</span>(pattern: String): String \/ TimeFormat =
+    \/.<span class="fu">fromTryCatchNonFatal</span>(DateTimeFormat.<span class="fu">forPattern</span>(pattern))
+      .<span class="fu">bimap</span>(
+        e =&gt; e.<span class="fu">getMessage</span>,
+        _ =&gt; <span class="fu">TimeFormat</span>(pattern)
+      )
+}      </code></pre></div>
+<div class="incremental">
+<pre><code>&gt; val attempt = TimeFormat.parse(&quot;YYYY-MM-tt&quot;) 
+&gt; attempt valueOr { s =&gt; throw new IllegalArgumentException(s) }
+
+java.lang.IllegalArgumentException: Illegal pattern component: tt</code></pre>
+</div>
+</div>
+<div id="variation-1" class="slide section level2">
+<h1>Variation</h1>
+<p>Maybe just returning an <code>Option[_]</code> is enough.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">class</span> CustomerID <span class="kw">private</span> (<span class="kw">val</span> id: Long) <span class="kw">extends</span> AnyVal
+
+<span class="kw">object</span> CustomerID {
+  <span class="kw">def</span> <span class="fu">parse</span>(id: Long): Option[CustomerID] =
+    <span class="kw">if</span> (<span class="dv">0</span> &lt; id &amp;&amp; id.<span class="fu">toString</span>.<span class="fu">length</span> &lt;= <span class="dv">10</span>)
+      Some(<span class="fu">Customer</span>(id))
+    <span class="kw">else</span> 
+      None
+}</code></pre></div>
+</div>
+<div id="awkwardness" class="slide section level2">
+<h1>Awkwardness</h1>
+<p>But sometimes we <strong>know</strong> our value is okay!</p>
+<p>We want to write</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">run</span>(answer: Int, port: Port = Port(<span class="dv">8080</span>)) = ...</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> testServerRunsOn8081 = {
+    <span class="kw">val</span> port = Port(<span class="dv">8081</span>)
+    
+    Server.<span class="fu">run</span>(<span class="dv">42</span>, port)
+    ...
+}</code></pre></div>
+<pre><code>val format       = Format(&quot;YYYY-MM-dd&quot;)
+val testCustomer = CustomerID(123)</code></pre>
+</div>
+<div id="awkwardness-1" class="slide section level2">
+<h1>Awkwardness</h1>
+<p>Instead we now have to write</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> <span class="fu">run</span>(quiddity: Int, port: Port = Port(<span class="dv">8080</span>).<span class="fu">valueOr</span>(error)) = ...</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">def</span> testServerRunsOn8081 = {
+    <span class="kw">val</span> port = Port(<span class="dv">8081</span>) valueOr error
+    
+    Server.<span class="fu">run</span>(<span class="dv">42</span>, port)
+    ...
+}</code></pre></div>
+<pre><code>val format       = Format(&quot;YYY-MM-dd&quot;) valueOr error
+val testCustomer = CustomerID(123).get</code></pre>
+</div>
+<div id="tradeoff" class="slide section level2">
+<h1>Tradeoff?</h1>
+<p>It seems we either have to</p>
+<ul class="incremental">
+<li>add ugly code to extract the value, or</li>
+<li>make the constructor public again.</li>
+</ul>
+<div class="incremental">
+<p>Neither option is particularly nice!</p>
+</div>
+</div>
+<div id="badness" class="slide section level2">
+<h1>Badness</h1>
+<p>Worse, our tests for correctness are only at runtime.</p>
+<p>If we forget a test...</p>
+<div class="figure">
+<img src="data:image/png;base64,R0lGODlhDwAPAPcAAP//////zP//mf//Zv//M///AP/M///MzP/Mmf/MZv/MM//MAP+Z//+ZzP+Zmf+ZZv+ZM/+ZAP9m//9mzP9mmf9mZv9mM/9mAP8z//8zzP8zmf8zZv8zM/8zAP8A//8AzP8Amf8AZv8AM/8AAMz//8z/zMz/mcz/Zsz/M8z/AMzM/8zMzMzMmczMZszMM8zMAMyZ/8yZzMyZmcyZZsyZM8yZAMxm/8xmzMxmmcxmZsxmM8xmAMwz/8wzzMwzmcwzZswzM8wzAMwA/8wAzMwAmcwAZswAM8wAAJn//5n/zJn/mZn/Zpn/M5n/AJnM/5nMzJnMmZnMZpnMM5nMAJmZ/5mZzJmZmZmZZpmZM5mZAJlm/5lmzJlmmZlmZplmM5lmAJkz/5kzzJkzmZkzZpkzM5kzAJkA/5kAzJkAmZkAZpkAM5kAAGb//2b/zGb/mWb/Zmb/M2b/AGbM/2bMzGbMmWbMZmbMM2bMAGaZ/2aZzGaZmWaZZmaZM2aZAGZm/2ZmzGZmmWZmZmZmM2ZmAGYz/2YzzGYzmWYzZmYzM2YzAGYA/2YAzGYAmWYAZmYAM2YAADP//zP/zDP/mTP/ZjP/MzP/ADPM/zPMzDPMmTPMZjPMMzPMADOZ/zOZzDOZmTOZZjOZMzOZADNm/zNmzDNmmTNmZjNmMzNmADMz/zMzzDMzmTMzZjMzMzMzADMA/zMAzDMAmTMAZjMAMzMAAAD//wD/zAD/mQD/ZgD/MwD/AADM/wDMzADMmQDMZgDMMwDMAACZ/wCZzACZmQCZZgCZMwCZAABm/wBmzABmmQBmZgBmMwBmAAAz/wAzzAAzmQAzZgAzMwAzAAAA/wAAzAAAmQAAZgAAM+4AAN0AALsAAKoAAIgAAHcAAFUAAEQAACIAABEAAADuAADdAAC7AACqAACIAAB3AABVAABEAAAiAAARAAAA7gAA3QAAuwAAqgAAiAAAdwAAVQAARAAAIgAAEe7u7t3d3bu7u6qqqoiIiHd3d1VVVURERCIiIhEREQAAACH/C05FVFNDQVBFMi4wAwEAAAAh+QQEMgAAACwAAAAADwAPAAAIVQABCBxIsAPBgwgBdIiQcKBBABEeNhT4byLBigIl/tuIEaNEAP9GiXS2MWFIJyJHkUR4MqUzlRgHtnS58mLKkTAP/nvJU2XNiz2d/dQpVGhMkxwbBgQAIfkEBDIAAAAsBwAAAAgADAAACCwAAQgcSDCCQIMEBxpE2AFhwQ4J/ykE8E9iQmcWHY7CONEZR4IbLQ70KNFhQAAh+QQEMgAAACwGAAEACAANAAAIMwABCBxIUGAEggcLDozQAcDBhB0SAnD271/BURQNCnSGUSIAjBkHcsyYEKRFkSFFntQYEAAh+QQEMgAAACwCAAIADAAMAAAIUQABCASQYKDBgx0IHlQIICHCfxA7SGzo8J/EDhEyXhQ4ygnGBAESRHCYIMGojyE1CnQy6mQEkRM5tnSJ0SGAUc5w4nT2z2DOnzwP/nNGNOjBgAAh+QQEMgAAACwAAAAADwAPAAAIhwABCEwgsKBBg/8MEgSwsEPBUaMeCHSWUOADhwMjEhxFUWAHiQDwARgFwKGzhhgBVCy50GOHkw9GOREYwSHJDh8F/vtIsmbJDj51XnQItMPOBEYBgCzaAWnTAEZTjgIaIUHVAE5BPnBWMgJWrDVTKh3qFSvOgv+4KgWawKrDfyLxVfw39KzBgAAh+QQEMgAAACwAAAAADwAPAAAIeAABCBwl8F8CAB0GCgRwcGGEBAcNCkzIEAC+iQ0nAiCYEUCEhxgB/BPYcFSHCBQzXkxA8WQEjwkuOmz48SHIhSRdPgzQ4SBBiighJghA9OXIDkiDRiBaNMLInUOHLg3wMaPQBFWXPqSIkCTWmhkJzhRKEqdIs2gDAgA7" width="80" height="80" />
+
+</div>
+<div class="incremental">
+<p>We should have static checks for statically known values.</p>
+</div>
+</div>
+<div id="what-we-want" class="slide section level2">
+<h1>What we want</h1>
+<p>Can we use macros to improve the situation?</p>
+<p>We want to allow literal parameters, with a <strong>compile-time</strong> check for correctness:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">val</span> f = Format(<span class="st">&quot;YYYY-MM-dd&quot;</span>)</code></pre></div>
+<div class="incremental">
+<p>But otherwise require handling the result properly</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">
+<span class="kw">val</span> port = Port.<span class="fu">parse</span>(args.<span class="fu">required</span>(<span class="st">&quot;port&quot;</span>)) <span class="kw">match</span> {
+  <span class="kw">case</span> Some(p) =&gt; p
+  <span class="kw">case</span> None    =&gt; <span class="fu">error</span>(<span class="st">&quot;Provide a valid port! That one was junk.&quot;</span>)
+}</code></pre></div>
+</div>
+</div>
+<div id="macros" class="slide section level2">
+<h1>Macros!</h1>
+<p>Can macros do that? Yes!</p>
+<div class="incremental">
+<p>First, add the right dependency:</p>
+<pre><code>libraryDependencies &lt;+= scalaVersion(&quot;org.scala-lang&quot; % &quot;scala-reflect&quot; % _)</code></pre>
+</div>
+</div>
+<div id="idea" class="slide section level2">
+<h1>Idea</h1>
+<p>We'll hide the constructor and provide a public <code>parse</code> method.</p>
+<p>But provide another secret method that <strong>only the macro can access</strong>.</p>
+<p>The macro will use this secret method to create a new instance, once it's verified the value is correct.</p>
+</div>
+<div id="no" class="slide section level2">
+<h1>No!</h1>
+<blockquote>
+<p>We'll hide the constructor and provide a public <code>parse</code> method.</p>
+<p>But provide another secret method that <strong>only the macro can access</strong>.</p>
+<p>The macro will use this secret method to create a new instance, once it's verified the value is correct.</p>
+</blockquote>
+<p>Unfortunately, that's not how macros work!</p>
+<div class="incremental">
+<p>They just rewrite the AST.</p>
+<p>So any code we generate has to involve only code that makes sense at the call site.</p>
+<p>So no invocation of private methods.</p>
+</div>
+</div>
+<div id="solution" class="slide section level2">
+<h1>Solution</h1>
+<div class="figure">
+<img src="CheckingItTwice.jpg" />
+
+</div>
+<div class="incremental">
+<ul>
+<li>Inside the body of the macro, test the value.</li>
+</ul>
+<p>Abort if invalid.</p>
+<ul>
+<li>The generated code calls <code>parse</code> and extracts the value from the return type.</li>
+</ul>
+</div>
+<div class="incremental">
+<p>It's okay that this generated code &quot;could throw an exception&quot;, because we've already checked to make sure it won't.</p>
+</div>
+</div>
+<div id="implementation" class="slide section level2">
+<h1>Implementation</h1>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">import</span> scala.<span class="fu">reflect</span>.<span class="fu">macros</span>.<span class="fu">blackbox</span>.<span class="fu">Context</span>
+
+<span class="kw">object</span> TimeFormat {
+  <span class="kw">def</span> <span class="fu">parse</span>(pattern: String): String \/ TimeFormat = ...
+    
+  <span class="kw">def</span> <span class="fu">apply</span>(pattern: String): TimeFormat = macro impl
+
+  <span class="kw">def</span> <span class="fu">impl</span>(c: Context)(pattern: c.<span class="fu">Tree</span>) = {
+    <span class="kw">import</span> c.<span class="fu">universe</span>.<span class="fu">_</span>
+
+    <span class="kw">def</span> <span class="fu">fail</span>(msg: String) = c.<span class="fu">abort</span>(c.<span class="fu">enclosingPosition</span>, msg)
+
+    pattern <span class="kw">match</span> {
+      <span class="kw">case</span> <span class="fu">Literal</span>(<span class="fu">Constant</span>(s: String)) =&gt;
+        <span class="fu">parse</span>(s) valueOr fail
+        <span class="kw">val</span> tp = weakTypeOf[TimeFormat].<span class="fu">typeSymbol</span>.<span class="fu">compantion</span>
+        q<span class="st">&quot;&quot;&quot;</span>
+          $tp.<span class="fu">parse</span>($pattern)
+          .<span class="fu">valueOr</span>(sys.<span class="fu">error</span>)
+        <span class="st">&quot;&quot;&quot;</span>
+      <span class="kw">case</span> other =&gt; 
+        <span class="fu">fail</span>(s<span class="st">&quot;&quot;&quot;</span>
+          $other is not a String literal.
+          Use TimeFormat.<span class="fu">parse</span> instead.
+        <span class="st">&quot;&quot;&quot;)</span>
+    }
+  }
+}</code></pre></div>
+</div>
+<div id="extensions" class="titleslide slide section level1"><h1>Extensions</h1></div><div id="what-else" class="slide section level2">
+<h1>What else?</h1>
+<p>As well as validating, a macro smart constructor can also calculate values:</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">
+<span class="co">// the programmer hashed the file and copied in the hash</span>
+<span class="kw">val</span> hash1 = <span class="fu">Hash</span>(<span class="st">&quot;476713e6b5cbcf5c84ef0953d1329e1b&quot;</span>) 
+
+<span class="co">// hashed at compile time</span>
+<span class="kw">val</span> hash2 = <span class="fu">Hash</span>(<span class="kw">new</span> File(<span class="st">&quot;my-file.txt&quot;</span>)) 
+
+hash2.<span class="fu">value</span> == <span class="st">&quot;476713e6b5cbcf5c84ef0953d1329e1b&quot;</span> <span class="co">// true</span></code></pre></div>
+</div><div id="unwrapping" class="slide section level2">
+<h1>Unwrapping</h1>
+<p>Implicit unwrapping can sometimes be useful.</p>
+<p>Then we gain safety, but don't lose ease-of-use.</p>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">case</span> <span class="kw">class</span> Format <span class="kw">private</span> (formatter: DateTimeFormatter)
+
+<span class="kw">object</span> Format {
+  <span class="kw">implicit</span> <span class="kw">def</span> <span class="fu">unwrap</span>(f: Format) = f.<span class="fu">formatter</span>
+  <span class="kw">def</span> <span class="fu">apply</span>(pattern: String): Format = macro impl
+  <span class="kw">def</span> <span class="fu">impl</span>(c: Context)(pattern: c.<span class="fu">Tree</span>) = ...
+}</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">&gt; Format(<span class="st">&quot;YYYY-MM-dd&quot;</span>).<span class="fu">parseDateTime</span>(<span class="st">&quot;2016-04-13&quot;</span>)
+
+<span class="dv">2016-04</span>-13T00:<span class="dv">00</span>:<span class="fl">00.000</span><span class="dv">+11</span>:<span class="dv">00</span></code></pre></div>
+</div><div id="string-interpolation" class="slide section level2">
+<h1>String interpolation</h1>
+<p>Macro string interpolators can accomplish some of the same goals.</p>
+<h3 id="normal-string-interpolator">Normal string interpolator</h3>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">
+<span class="kw">object</span> TimeFormatLiterals {
+  <span class="kw">implicit</span> <span class="kw">class</span> <span class="fu">TimeFormatContext</span>(sc: StringContext) {
+    <span class="kw">def</span> <span class="fu">format</span>() =
+      TimeFormat.<span class="fu">parse</span>(sc.<span class="fu">parts</span>.<span class="fu">head</span>)
+}      </code></pre></div>
+<pre><code>import TimeFormatLiterals._
+
+&gt; val attempt = format&quot;YYYY-MM-tt&quot;
+&gt; attempt valueOr { s =&gt; throw new IllegalArgumentException(s) }
+
+java.lang.IllegalArgumentException: Illegal pattern component: tt</code></pre>
+</div><div id="string-interpolation-1" class="slide section level2">
+<h1>String interpolation</h1>
+<p>Macro string interpolators can accomplish some of the same goals.</p>
+<h3 id="macro-string-interpolator">Macro string interpolator</h3>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala"><span class="kw">object</span> DateTimeFormatterLiterals {
+  <span class="kw">implicit</span> <span class="kw">class</span> <span class="fu">FormatContext</span>(<span class="kw">val</span> sc: StringContext) {
+    <span class="kw">def</span> <span class="fu">timeFormat</span>(): TimeFormat = macro timeFormatImpl
+  }
+
+  <span class="kw">def</span> <span class="fu">timeFormatImpl</span>(c: Context)() = {
+    <span class="kw">import</span> c.<span class="fu">universe</span>.<span class="fu">_</span>
+    <span class="kw">import</span> scala.<span class="fu">util</span>.{Failure, Success, Try}
+
+    c.<span class="fu">prefix</span>.<span class="fu">tree</span> <span class="kw">match</span> {
+      <span class="kw">case</span> q<span class="st">&quot;&quot;&quot; $object($implicitClass(${p: String})) &quot;&quot;&quot;</span> =&gt;
+        <span class="fu">Try</span>(DateTimeFormat.<span class="fu">forPattern</span>(f)) <span class="kw">match</span> {
+          <span class="kw">case</span> <span class="fu">Failure</span>(e) =&gt;
+            <span class="fu">fail</span>(<span class="st">&quot;Invalid time format. &quot;</span> + e.<span class="fu">getMessage</span>)
+          <span class="kw">case</span> <span class="fu">Success</span>(_) =&gt;
+            q<span class="st">&quot;_root_.mypackage.TimeFormat.parse($p) valueOr sys.error&quot;</span>
+        }
+    }
+  }
+}</code></pre></div>
+</div><div id="macro-string-interpolator-usage" class="slide section level2">
+<h1>Macro string interpolator usage</h1>
+<div class="sourceCode"><pre class="sourceCode scala"><code class="sourceCode scala">
+&gt; format<span class="st">&quot;EEE d MMMM&quot;</span> print DateTime.<span class="fu">now</span>()
+
+Wednesday <span class="dv">13</span> April
+
+&gt; format<span class="st">&quot;EEE d tttt&quot;</span> print DateTime.<span class="fu">now</span>()
+
+Invalid time format. Illegal pattern component: tttt
+ 
+  format<span class="st">&quot;EEE d tttt&quot;</span> print DateTime.<span class="fu">now</span>()
+         ^  
+Compilation failed         </code></pre></div>
+</div><div class="slide section level2">
+
+<h3 id="demo-code">Demo code</h3>
+<p><a href="https://github.com/mjhopkins/macro-smart-constructors">github.com/mjhopkins/macro-smart-constructors</a></p>
+<h3 id="twitter">Twitter</h3>
+<p><span class="citation"><a href="https://twitter.com/antiselfdual">@antiselfdual</a></span></p>
+</div>
+<div id="end" class="titleslide slide section level1"><h1>End</h1></div>
+</body>
+</html>
