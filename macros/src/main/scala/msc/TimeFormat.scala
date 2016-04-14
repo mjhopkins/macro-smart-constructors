@@ -40,7 +40,7 @@ object TimeFormat {
             $tf.parse($pattern) valueOr _root_.scala.sys.error
         """
 
-      /* Alternatively, this is another way to reference TimeFormat in a hygienic way
+      /* Alternatively, this is another way to reference TimeFormat in an hygienic way
          i.e. that won't be broken by clashing imports or definitions
        */
 
